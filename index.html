@@ -107,7 +107,7 @@
 <body>
 <div class="container">
   <h1>📌 Missiecoördinaten - sleep de pinnen & bewerk teksten</h1>
-  <p style="color: #8899aa; margin-bottom: 16px;">Sleep de markers naar de gewenste locaties. Bewerk de cryptische omschrijving en opdrachtteksten in de lijst.</p>
+  <p style="color: #8899aa; margin-bottom: 16px;">Sleep de markers naar de gewenste locaties. Bewerk de cryptische omschrijving, opdrachtteksten en het spoor/materiaal per locatie.</p>
 
   <div id="map"></div>
 
@@ -120,22 +120,22 @@
 </div>
 
 <script>
-  // ----- Initieel de 14 missies -----
+  // ----- Initieel de 14 missies (met leeg spoor) -----
   const initialMissions = [
-    { id: "mission1", order: 1, lat: 52.131168, lng: 5.365757, cryptic: "Er is een handlanger die op de criminelen wacht. Zorg dat hij de aarde niet raakt. Bewijs van hun ontmoeting is vereist.", description: "Pik hier jullie handlanger op. De handlanger mag onder geen enkele voorwaarde, tijdens jullie actie, de grond raken. Maak een foto van jullie team, met handlanger voor de schuilplaats van de handlanger." },
-    { id: "mission2", order: 2, lat: 52.131605, lng: 5.368394, cryptic: "De criminelen hebben een vluchtvoertuig nodig. Kies er één uit en maak een foto met de handlanger en het voertuig.", description: "Zoek hier een geschikt vluchtvoertuig uit. Maak een foto met jullie handlanger en het voertuig." },
-    { id: "mission3", order: 3, lat: 52.130893, lng: 5.364418, cryptic: "De handlanger moet laten zien dat hij met een vuurwapen kan omgaan. Een foto van de handlanger met een vuurwapen is vereist.", description: "Jullie zijn vuurwapengevaarlijk. Laat zien dat jullie handlanger niet erg handig is met een vuurwapen." },
-    { id: "mission4", order: 4, lat: 52.132714, lng: 5.368064, cryptic: "De vlucht van de criminelen heeft een ongeluk veroorzaakt. De hunters moeten een foto van de schade zien.", description: "Jullie vluchtgedrag is erg gevaarlijk! Maak een foto van het ongeluk dat jullie veroorzaakten." },
-    { id: "mission5", order: 5, lat: 52.131170, lng: 5.366998, cryptic: "De geheime documenten liggen op een bepaalde plek. De handlanger moet ze controleren.", description: "Hier liggen de geheime documenten. Deze documenten moeten jullie hebben! Maak een foto dat jullie handlanger de documenten checkt." },
-    { id: "mission6", order: 6, lat: 52.131334, lng: 5.366343, cryptic: "Is dit een geschikte plek om de documenten te verbergen? Laat de hunters een foto zien.", description: "Is dit een geschikte plek om de documenten te verbergen? Maak een foto." },
-    { id: "mission7", order: 7, lat: 52.131500, lng: 5.366800, cryptic: "De handlanger moet contact opnemen met een persoon. Een foto van de ontmoeting is vereist.", description: "De handlanger heeft een contactpersoon. Maak een foto van de ontmoeting." },
-    { id: "mission8", order: 8, lat: 52.130000, lng: 5.367000, cryptic: "De criminelen hebben een schuilplaats nodig voor de nacht. Laat de hunters de schuilplaats zien.", description: "Zoek een schuilplaats voor de nacht. Maak een foto van de schuilplaats." },
-    { id: "mission9", order: 9, lat: 52.132000, lng: 5.365000, cryptic: "De achtervolging is ingezet. De criminelen moeten sporen uitwissen. Een foto van de afgelegde weg is vereist.", description: "De achtervolging is ingezet. Zorg dat jullie sporen uitwissen. Maak een foto van de weg die jullie hebben afgelegd." },
-    { id: "mission10", order: 10, lat: 52.131800, lng: 5.368500, cryptic: "De documenten bevatten geheime codes. De handlanger moet een code onthouden. Laat de hunters de code zien.", description: "De documenten bevatten geheime codes. Laat de handlanger een code onthouden. Maak een foto van de code." },
-    { id: "mission11", order: 11, lat: 52.130500, lng: 5.365500, cryptic: "Er is een checkpoint. De handlanger moet de wacht omkopen. Een foto van de omkoping is vereist.", description: "Er is een checkpoint. Laat de handlanger de wacht omkopen. Maak een foto van de omkoping." },
-    { id: "mission12", order: 12, lat: 52.131000, lng: 5.367500, cryptic: "De documenten moeten worden overhandigd aan de opdrachtgever. Een foto van de overhandiging is vereist.", description: "Jullie moeten de documenten overhandigen aan de opdrachtgever. Maak een foto van de overhandiging." },
-    { id: "mission13", order: 13, lat: 52.132500, lng: 5.366500, cryptic: "De opdrachtgever wil een teken van loyaliteit. Laat de handlanger met een wapen zien.", description: "De opdrachtgever wil een teken van jullie loyaliteit. Maak een foto van jullie team met een wapen." },
-    { id: "mission14", order: 14, lat: 52.130800, lng: 5.368200, cryptic: "De ontsnapping per helikopter is de laatste stap. Een foto van de helikopter is vereist.", description: "Einddoel: ontsnapping per helikopter. Maak een foto van de helikopter." }
+    { id: "mission1", order: 1, lat: 52.131168, lng: 5.365757, cryptic: "Er is een handlanger die op de criminelen wacht. Zorg dat hij de aarde niet raakt. Bewijs van hun ontmoeting is vereist.", description: "Pik hier jullie handlanger op. De handlanger mag onder geen enkele voorwaarde, tijdens jullie actie, de grond raken. Maak een foto van jullie team, met handlanger voor de schuilplaats van de handlanger.", spoor: "" },
+    { id: "mission2", order: 2, lat: 52.131605, lng: 5.368394, cryptic: "De criminelen hebben een vluchtvoertuig nodig. Kies er één uit en maak een foto met de handlanger en het voertuig.", description: "Zoek hier een geschikt vluchtvoertuig uit. Maak een foto met jullie handlanger en het voertuig.", spoor: "" },
+    { id: "mission3", order: 3, lat: 52.130893, lng: 5.364418, cryptic: "De handlanger moet laten zien dat hij met een vuurwapen kan omgaan. Een foto van de handlanger met een vuurwapen is vereist.", description: "Jullie zijn vuurwapengevaarlijk. Laat zien dat jullie handlanger niet erg handig is met een vuurwapen.", spoor: "" },
+    { id: "mission4", order: 4, lat: 52.132714, lng: 5.368064, cryptic: "De vlucht van de criminelen heeft een ongeluk veroorzaakt. De hunters moeten een foto van de schade zien.", description: "Jullie vluchtgedrag is erg gevaarlijk! Maak een foto van het ongeluk dat jullie veroorzaakten.", spoor: "" },
+    { id: "mission5", order: 5, lat: 52.131170, lng: 5.366998, cryptic: "De geheime documenten liggen op een bepaalde plek. De handlanger moet ze controleren.", description: "Hier liggen de geheime documenten. Deze documenten moeten jullie hebben! Maak een foto dat jullie handlanger de documenten checkt.", spoor: "" },
+    { id: "mission6", order: 6, lat: 52.131334, lng: 5.366343, cryptic: "Is dit een geschikte plek om de documenten te verbergen? Laat de hunters een foto zien.", description: "Is dit een geschikte plek om de documenten te verbergen? Maak een foto.", spoor: "" },
+    { id: "mission7", order: 7, lat: 52.131500, lng: 5.366800, cryptic: "De handlanger moet contact opnemen met een persoon. Een foto van de ontmoeting is vereist.", description: "De handlanger heeft een contactpersoon. Maak een foto van de ontmoeting.", spoor: "" },
+    { id: "mission8", order: 8, lat: 52.130000, lng: 5.367000, cryptic: "De criminelen hebben een schuilplaats nodig voor de nacht. Laat de hunters de schuilplaats zien.", description: "Zoek een schuilplaats voor de nacht. Maak een foto van de schuilplaats.", spoor: "" },
+    { id: "mission9", order: 9, lat: 52.132000, lng: 5.365000, cryptic: "De achtervolging is ingezet. De criminelen moeten sporen uitwissen. Een foto van de afgelegde weg is vereist.", description: "De achtervolging is ingezet. Zorg dat jullie sporen uitwissen. Maak een foto van de weg die jullie hebben afgelegd.", spoor: "" },
+    { id: "mission10", order: 10, lat: 52.131800, lng: 5.368500, cryptic: "De documenten bevatten geheime codes. De handlanger moet een code onthouden. Laat de hunters de code zien.", description: "De documenten bevatten geheime codes. Laat de handlanger een code onthouden. Maak een foto van de code.", spoor: "" },
+    { id: "mission11", order: 11, lat: 52.130500, lng: 5.365500, cryptic: "Er is een checkpoint. De handlanger moet de wacht omkopen. Een foto van de omkoping is vereist.", description: "Er is een checkpoint. Laat de handlanger de wacht omkopen. Maak een foto van de omkoping.", spoor: "" },
+    { id: "mission12", order: 12, lat: 52.131000, lng: 5.367500, cryptic: "De documenten moeten worden overhandigd aan de opdrachtgever. Een foto van de overhandiging is vereist.", description: "Jullie moeten de documenten overhandigen aan de opdrachtgever. Maak een foto van de overhandiging.", spoor: "" },
+    { id: "mission13", order: 13, lat: 52.132500, lng: 5.366500, cryptic: "De opdrachtgever wil een teken van loyaliteit. Laat de handlanger met een wapen zien.", description: "De opdrachtgever wil een teken van jullie loyaliteit. Maak een foto van jullie team met een wapen.", spoor: "" },
+    { id: "mission14", order: 14, lat: 52.130800, lng: 5.368200, cryptic: "De ontsnapping per helikopter is de laatste stap. Een foto van de helikopter is vereist.", description: "Einddoel: ontsnapping per helikopter. Maak een foto van de helikopter.", spoor: "" }
   ];
 
   // Kopieer de missies zodat we ze kunnen wijzigen
@@ -156,11 +156,12 @@
       autoPan: true
     }).addTo(map);
 
-    // Popup met missie-informatie
+    // Popup met missie-informatie (inclusief spoor)
     const popupContent = `
       <strong>Missie ${m.order}</strong><br>
       <strong>Cryptisch:</strong> ${m.cryptic}<br>
       <strong>Opdracht:</strong> ${m.description}<br>
+      <strong>Spoor:</strong> ${m.spoor || '—'}<br>
       <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
     `;
     marker.bindPopup(popupContent);
@@ -170,9 +171,7 @@
       const newLatLng = marker.getLatLng();
       m.lat = newLatLng.lat;
       m.lng = newLatLng.lng;
-      // Update popup content
       updatePopup(marker, m);
-      // Update de lijst (alleen coördinaten)
       updateCoordList();
       document.getElementById('status').textContent = '📍 Coördinaten bijgewerkt.';
     });
@@ -186,6 +185,7 @@
       <strong>Missie ${m.order}</strong><br>
       <strong>Cryptisch:</strong> ${m.cryptic}<br>
       <strong>Opdracht:</strong> ${m.description}<br>
+      <strong>Spoor:</strong> ${m.spoor || '—'}<br>
       <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
     `;
     marker.setPopupContent(content);
@@ -207,6 +207,8 @@
           <textarea class="coord-textarea cryptic-input" rows="2">${m.cryptic}</textarea>
           <label class="coord-label">📋 Opdrachtbeschrijving</label>
           <textarea class="coord-textarea desc-input" rows="3">${m.description}</textarea>
+          <label class="coord-label">🧩 Spoor / materiaal (wat moet er klaarliggen?)</label>
+          <textarea class="coord-textarea spoor-input" rows="2">${m.spoor || ''}</textarea>
         </div>
       `;
     }
@@ -217,6 +219,7 @@
     items.forEach((item, index) => {
       const crypticTextarea = item.querySelector('.cryptic-input');
       const descTextarea = item.querySelector('.desc-input');
+      const spoorTextarea = item.querySelector('.spoor-input');
       const m = missions[index];
 
       crypticTextarea.addEventListener('input', function() {
@@ -230,10 +233,16 @@
         updatePopup(markers[index], m);
         document.getElementById('status').textContent = '📋 Opdrachttekst bijgewerkt.';
       });
+
+      spoorTextarea.addEventListener('input', function() {
+        m.spoor = this.value;
+        updatePopup(markers[index], m);
+        document.getElementById('status').textContent = '🧩 Spoor/materiaal bijgewerkt.';
+      });
     });
   }
 
-  // ----- JSON genereren (alle velden) -----
+  // ----- JSON genereren (alle velden, inclusief spoor) -----
   function getJSON() {
     const data = missions.map(m => ({
       id: m.id,
@@ -241,7 +250,8 @@
       lat: m.lat,
       lng: m.lng,
       cryptic: m.cryptic,
-      description: m.description
+      description: m.description,
+      spoor: m.spoor || ''
     }));
     return JSON.stringify(data, null, 2);
   }
@@ -253,7 +263,6 @@
       await navigator.clipboard.writeText(json);
       document.getElementById('status').textContent = '✅ JSON gekopieerd naar klembord!';
     } catch (err) {
-      // Fallback
       const textarea = document.createElement('textarea');
       textarea.value = json;
       document.body.appendChild(textarea);
