@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Missiecoördinaten - sleepbaar</title>
+  <title>Missiecoördinaten - sleepbaar en bewerkbaar</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
@@ -39,7 +39,7 @@
       margin-top: 0;
     }
     .coord-item {
-      padding: 8px 0;
+      padding: 12px 0;
       border-bottom: 1px solid #2a3a4a;
     }
     .coord-item:last-child {
@@ -49,6 +49,7 @@
       display: flex;
       justify-content: space-between;
       font-size: 0.9rem;
+      margin-bottom: 6px;
     }
     .coord-id {
       color: #8899aa;
@@ -58,14 +59,27 @@
       color: #e0e0e0;
       font-family: monospace;
     }
-    .coord-text {
-      font-size: 0.75rem;
-      color: #aabbcc;
+    .coord-textarea {
+      width: 100%;
+      background: #0d1624;
+      border: 1px solid #2a3a4a;
+      border-radius: 4px;
+      color: #e0e0e0;
+      padding: 6px 8px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      resize: vertical;
       margin-top: 4px;
-      line-height: 1.4;
     }
-    .coord-text .label {
+    .coord-textarea:focus {
+      border-color: #4a90d9;
+      outline: none;
+    }
+    .coord-label {
+      font-size: 0.75rem;
       color: #8899aa;
+      display: block;
+      margin-top: 4px;
     }
     .copy-btn {
       background: #4a90d9;
@@ -92,13 +106,13 @@
 </head>
 <body>
 <div class="container">
-  <h1>📌 Missiecoördinaten - sleep de pinnen</h1>
-  <p style="color: #8899aa; margin-bottom: 16px;">Sleep de markers naar de gewenste locaties. De coördinaten worden live bijgewerkt.</p>
+  <h1>📌 Missiecoördinaten - sleep de pinnen & bewerk teksten</h1>
+  <p style="color: #8899aa; margin-bottom: 16px;">Sleep de markers naar de gewenste locaties. Bewerk de cryptische omschrijving en opdrachtteksten in de lijst.</p>
 
   <div id="map"></div>
 
   <div class="coord-list">
-    <h2>📋 Huidige missies (kopieer de JSON)</h2>
+    <h2>📋 Missies (bewerkbaar)</h2>
     <div id="coordContainer"></div>
     <button class="copy-btn" id="copyBtn">📋 Kopieer JSON naar klembord</button>
     <div id="status" class="status"></div>
@@ -136,19 +150,20 @@
   // ----- Markers aanmaken (draggable) -----
   const markers = [];
 
-  function createMarker(m) {
+  function createMarker(m, index) {
     const marker = L.marker([m.lat, m.lng], {
       draggable: true,
       autoPan: true
     }).addTo(map);
 
-    // Popup met volledige missie-informatie
-    marker.bindPopup(`
+    // Popup met missie-informatie
+    const popupContent = `
       <strong>Missie ${m.order}</strong><br>
       <strong>Cryptisch:</strong> ${m.cryptic}<br>
       <strong>Opdracht:</strong> ${m.description}<br>
       <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
-    `);
+    `;
+    marker.bindPopup(popupContent);
 
     // Drag-event: update coördinaten
     marker.on('dragend', function(e) {
@@ -156,13 +171,8 @@
       m.lat = newLatLng.lat;
       m.lng = newLatLng.lng;
       // Update popup content
-      marker.getPopup().setContent(`
-        <strong>Missie ${m.order}</strong><br>
-        <strong>Cryptisch:</strong> ${m.cryptic}<br>
-        <strong>Opdracht:</strong> ${m.description}<br>
-        <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
-      `);
-      // Update de lijst
+      updatePopup(marker, m);
+      // Update de lijst (alleen coördinaten)
       updateCoordList();
       document.getElementById('status').textContent = '📍 Coördinaten bijgewerkt.';
     });
@@ -170,28 +180,57 @@
     return marker;
   }
 
-  // ----- Lijst bijwerken -----
+  // Helper om popup te updaten
+  function updatePopup(marker, m) {
+    const content = `
+      <strong>Missie ${m.order}</strong><br>
+      <strong>Cryptisch:</strong> ${m.cryptic}<br>
+      <strong>Opdracht:</strong> ${m.description}<br>
+      <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
+    `;
+    marker.setPopupContent(content);
+  }
+
+  // ----- Lijst bijwerken (met bewerkbare velden) -----
   function updateCoordList() {
     const container = document.getElementById('coordContainer');
     let html = '';
-    for (const m of missions) {
-      // Knip lange teksten af voor de lijst (volledig in popup)
-      const crypticShort = m.cryptic.length > 80 ? m.cryptic.substring(0, 80) + '...' : m.cryptic;
-      const descShort = m.description.length > 80 ? m.description.substring(0, 80) + '...' : m.description;
+    for (let i = 0; i < missions.length; i++) {
+      const m = missions[i];
       html += `
-        <div class="coord-item">
+        <div class="coord-item" data-index="${i}">
           <div class="coord-header">
             <span class="coord-id">#${m.order}</span>
             <span class="coord-coords">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
           </div>
-          <div class="coord-text">
-            <span class="label">🔐 Cryptisch:</span> ${crypticShort}<br>
-            <span class="label">📋 Opdracht:</span> ${descShort}
-          </div>
+          <label class="coord-label">🔐 Cryptische omschrijving</label>
+          <textarea class="coord-textarea cryptic-input" rows="2">${m.cryptic}</textarea>
+          <label class="coord-label">📋 Opdrachtbeschrijving</label>
+          <textarea class="coord-textarea desc-input" rows="3">${m.description}</textarea>
         </div>
       `;
     }
     container.innerHTML = html;
+
+    // Voeg event listeners toe aan de textarea's
+    const items = container.querySelectorAll('.coord-item');
+    items.forEach((item, index) => {
+      const crypticTextarea = item.querySelector('.cryptic-input');
+      const descTextarea = item.querySelector('.desc-input');
+      const m = missions[index];
+
+      crypticTextarea.addEventListener('input', function() {
+        m.cryptic = this.value;
+        updatePopup(markers[index], m);
+        document.getElementById('status').textContent = '🔐 Cryptische tekst bijgewerkt.';
+      });
+
+      descTextarea.addEventListener('input', function() {
+        m.description = this.value;
+        updatePopup(markers[index], m);
+        document.getElementById('status').textContent = '📋 Opdrachttekst bijgewerkt.';
+      });
+    });
   }
 
   // ----- JSON genereren (alle velden) -----
@@ -226,8 +265,9 @@
   });
 
   // ----- Bouw markers en lijst -----
-  for (const m of missions) {
-    const marker = createMarker(m);
+  for (let i = 0; i < missions.length; i++) {
+    const m = missions[i];
+    const marker = createMarker(m, i);
     markers.push(marker);
   }
   updateCoordList();
