@@ -39,19 +39,33 @@
       margin-top: 0;
     }
     .coord-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #2a3a4a;
+    }
+    .coord-item:last-child {
+      border-bottom: none;
+    }
+    .coord-header {
       display: flex;
       justify-content: space-between;
-      padding: 4px 0;
-      border-bottom: 1px solid #2a3a4a;
       font-size: 0.9rem;
     }
-    .coord-item .id {
+    .coord-id {
       color: #8899aa;
       width: 60px;
     }
-    .coord-item .coords {
+    .coord-coords {
       color: #e0e0e0;
       font-family: monospace;
+    }
+    .coord-text {
+      font-size: 0.75rem;
+      color: #aabbcc;
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .coord-text .label {
+      color: #8899aa;
     }
     .copy-btn {
       background: #4a90d9;
@@ -84,7 +98,7 @@
   <div id="map"></div>
 
   <div class="coord-list">
-    <h2>📋 Huidige coördinaten (kopieer dit JSON)</h2>
+    <h2>📋 Huidige missies (kopieer de JSON)</h2>
     <div id="coordContainer"></div>
     <button class="copy-btn" id="copyBtn">📋 Kopieer JSON naar klembord</button>
     <div id="status" class="status"></div>
@@ -92,7 +106,7 @@
 </div>
 
 <script>
-  // ----- Initieel de 14 missies (kan later overschreven worden) -----
+  // ----- Initieel de 14 missies -----
   const initialMissions = [
     { id: "mission1", order: 1, lat: 52.131168, lng: 5.365757, cryptic: "Er is een handlanger die op de criminelen wacht. Zorg dat hij de aarde niet raakt. Bewijs van hun ontmoeting is vereist.", description: "Pik hier jullie handlanger op. De handlanger mag onder geen enkele voorwaarde, tijdens jullie actie, de grond raken. Maak een foto van jullie team, met handlanger voor de schuilplaats van de handlanger." },
     { id: "mission2", order: 2, lat: 52.131605, lng: 5.368394, cryptic: "De criminelen hebben een vluchtvoertuig nodig. Kies er één uit en maak een foto met de handlanger en het voertuig.", description: "Zoek hier een geschikt vluchtvoertuig uit. Maak een foto met jullie handlanger en het voertuig." },
@@ -110,7 +124,7 @@
     { id: "mission14", order: 14, lat: 52.130800, lng: 5.368200, cryptic: "De ontsnapping per helikopter is de laatste stap. Een foto van de helikopter is vereist.", description: "Einddoel: ontsnapping per helikopter. Maak een foto van de helikopter." }
   ];
 
-  // We werken met een kopie zodat we de markers kunnen bijwerken
+  // Kopieer de missies zodat we ze kunnen wijzigen
   let missions = initialMissions.map(m => ({ ...m }));
 
   // ----- Kaart initialiseren -----
@@ -128,10 +142,11 @@
       autoPan: true
     }).addTo(map);
 
-    // Popup met missie-informatie
+    // Popup met volledige missie-informatie
     marker.bindPopup(`
       <strong>Missie ${m.order}</strong><br>
-      ${m.description}<br>
+      <strong>Cryptisch:</strong> ${m.cryptic}<br>
+      <strong>Opdracht:</strong> ${m.description}<br>
       <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
     `);
 
@@ -143,12 +158,12 @@
       // Update popup content
       marker.getPopup().setContent(`
         <strong>Missie ${m.order}</strong><br>
-        ${m.description}<br>
+        <strong>Cryptisch:</strong> ${m.cryptic}<br>
+        <strong>Opdracht:</strong> ${m.description}<br>
         <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
       `);
       // Update de lijst
       updateCoordList();
-      // Update de status
       document.getElementById('status').textContent = '📍 Coördinaten bijgewerkt.';
     });
 
@@ -160,10 +175,19 @@
     const container = document.getElementById('coordContainer');
     let html = '';
     for (const m of missions) {
+      // Knip lange teksten af voor de lijst (volledig in popup)
+      const crypticShort = m.cryptic.length > 80 ? m.cryptic.substring(0, 80) + '...' : m.cryptic;
+      const descShort = m.description.length > 80 ? m.description.substring(0, 80) + '...' : m.description;
       html += `
         <div class="coord-item">
-          <span class="id">#${m.order}</span>
-          <span class="coords">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
+          <div class="coord-header">
+            <span class="coord-id">#${m.order}</span>
+            <span class="coord-coords">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
+          </div>
+          <div class="coord-text">
+            <span class="label">🔐 Cryptisch:</span> ${crypticShort}<br>
+            <span class="label">📋 Opdracht:</span> ${descShort}
+          </div>
         </div>
       `;
     }
@@ -190,7 +214,7 @@
       await navigator.clipboard.writeText(json);
       document.getElementById('status').textContent = '✅ JSON gekopieerd naar klembord!';
     } catch (err) {
-      // Fallback voor browsers zonder clipboard API
+      // Fallback
       const textarea = document.createElement('textarea');
       textarea.value = json;
       document.body.appendChild(textarea);
@@ -207,9 +231,6 @@
     markers.push(marker);
   }
   updateCoordList();
-
-  // ----- Optioneel: Reset knop (originele coördinaten) -----
-  // Je kunt een reset button toevoegen als je wilt.
 </script>
 </body>
 </html>
