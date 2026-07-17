@@ -304,7 +304,7 @@
         <strong>Spoor:</strong> ${m.spoor || '—'}<br>
         <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
       `;
-      marker.setPopupContent(content);
+      marker.bindPopup(content);
     }
     updatePopup();
 
@@ -382,7 +382,7 @@
         <strong>Spoor:</strong> ${m.spoor || '—'}<br>
         <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
       `;
-      marker.setPopupContent(content);
+      marker.bindPopup(content);
     }
   }
 
