@@ -120,22 +120,134 @@
 </div>
 
 <script>
-  // ----- Initieel de 14 missies (met leeg spoor) -----
+  // ----- Initieel de 14 missies (exact zoals aangeleverd) -----
   const initialMissions = [
-    { id: "mission1", order: 1, lat: 52.131168, lng: 5.365757, cryptic: "Er is een handlanger die op de criminelen wacht. Zorg dat hij de aarde niet raakt. Bewijs van hun ontmoeting is vereist.", description: "Pik hier jullie handlanger op. De handlanger mag onder geen enkele voorwaarde, tijdens jullie actie, de grond raken. Maak een foto van jullie team, met handlanger voor de schuilplaats van de handlanger.", spoor: "" },
-    { id: "mission2", order: 2, lat: 52.131605, lng: 5.368394, cryptic: "De criminelen hebben een vluchtvoertuig nodig. Kies er één uit en maak een foto met de handlanger en het voertuig.", description: "Zoek hier een geschikt vluchtvoertuig uit. Maak een foto met jullie handlanger en het voertuig.", spoor: "" },
-    { id: "mission3", order: 3, lat: 52.130893, lng: 5.364418, cryptic: "De handlanger moet laten zien dat hij met een vuurwapen kan omgaan. Een foto van de handlanger met een vuurwapen is vereist.", description: "Jullie zijn vuurwapengevaarlijk. Laat zien dat jullie handlanger niet erg handig is met een vuurwapen.", spoor: "" },
-    { id: "mission4", order: 4, lat: 52.132714, lng: 5.368064, cryptic: "De vlucht van de criminelen heeft een ongeluk veroorzaakt. De hunters moeten een foto van de schade zien.", description: "Jullie vluchtgedrag is erg gevaarlijk! Maak een foto van het ongeluk dat jullie veroorzaakten.", spoor: "" },
-    { id: "mission5", order: 5, lat: 52.131170, lng: 5.366998, cryptic: "De geheime documenten liggen op een bepaalde plek. De handlanger moet ze controleren.", description: "Hier liggen de geheime documenten. Deze documenten moeten jullie hebben! Maak een foto dat jullie handlanger de documenten checkt.", spoor: "" },
-    { id: "mission6", order: 6, lat: 52.131334, lng: 5.366343, cryptic: "Is dit een geschikte plek om de documenten te verbergen? Laat de hunters een foto zien.", description: "Is dit een geschikte plek om de documenten te verbergen? Maak een foto.", spoor: "" },
-    { id: "mission7", order: 7, lat: 52.131500, lng: 5.366800, cryptic: "De handlanger moet contact opnemen met een persoon. Een foto van de ontmoeting is vereist.", description: "De handlanger heeft een contactpersoon. Maak een foto van de ontmoeting.", spoor: "" },
-    { id: "mission8", order: 8, lat: 52.130000, lng: 5.367000, cryptic: "De criminelen hebben een schuilplaats nodig voor de nacht. Laat de hunters de schuilplaats zien.", description: "Zoek een schuilplaats voor de nacht. Maak een foto van de schuilplaats.", spoor: "" },
-    { id: "mission9", order: 9, lat: 52.132000, lng: 5.365000, cryptic: "De achtervolging is ingezet. De criminelen moeten sporen uitwissen. Een foto van de afgelegde weg is vereist.", description: "De achtervolging is ingezet. Zorg dat jullie sporen uitwissen. Maak een foto van de weg die jullie hebben afgelegd.", spoor: "" },
-    { id: "mission10", order: 10, lat: 52.131800, lng: 5.368500, cryptic: "De documenten bevatten geheime codes. De handlanger moet een code onthouden. Laat de hunters de code zien.", description: "De documenten bevatten geheime codes. Laat de handlanger een code onthouden. Maak een foto van de code.", spoor: "" },
-    { id: "mission11", order: 11, lat: 52.130500, lng: 5.365500, cryptic: "Er is een checkpoint. De handlanger moet de wacht omkopen. Een foto van de omkoping is vereist.", description: "Er is een checkpoint. Laat de handlanger de wacht omkopen. Maak een foto van de omkoping.", spoor: "" },
-    { id: "mission12", order: 12, lat: 52.131000, lng: 5.367500, cryptic: "De documenten moeten worden overhandigd aan de opdrachtgever. Een foto van de overhandiging is vereist.", description: "Jullie moeten de documenten overhandigen aan de opdrachtgever. Maak een foto van de overhandiging.", spoor: "" },
-    { id: "mission13", order: 13, lat: 52.132500, lng: 5.366500, cryptic: "De opdrachtgever wil een teken van loyaliteit. Laat de handlanger met een wapen zien.", description: "De opdrachtgever wil een teken van jullie loyaliteit. Maak een foto van jullie team met een wapen.", spoor: "" },
-    { id: "mission14", order: 14, lat: 52.130800, lng: 5.368200, cryptic: "De ontsnapping per helikopter is de laatste stap. Een foto van de helikopter is vereist.", description: "Einddoel: ontsnapping per helikopter. Maak een foto van de helikopter.", spoor: "" }
+    {
+      "id": "mission1",
+      "order": 1,
+      "lat": 52.131168,
+      "lng": 5.365757,
+      "cryptic": "Er is een handlanger die op de criminelen wacht. Zorg dat hij de aarde niet raakt. Bewijs van hun ontmoeting is vereist.",
+      "description": "Pik hier jullie handlanger op. De handlanger mag onder geen enkele voorwaarde, tijdens jullie actie, de grond raken. Maak een foto van jullie team, met handlanger voor de schuilplaats van de handlanger.",
+      "spoor": ""
+    },
+    {
+      "id": "mission2",
+      "order": 2,
+      "lat": 52.131605,
+      "lng": 5.368394,
+      "cryptic": "De criminelen hebben een vluchtvoertuig nodig. Kies er één uit en maak een foto met de handlanger en het voertuig.",
+      "description": "Zoek hier een geschikt vluchtvoertuig uit. Maak een foto met jullie handlanger en het voertuig.",
+      "spoor": ""
+    },
+    {
+      "id": "mission3",
+      "order": 3,
+      "lat": 52.130893,
+      "lng": 5.364418,
+      "cryptic": "De handlanger moet laten zien dat hij met een vuurwapen kan omgaan. Een foto van de handlanger met een vuurwapen is vereist.",
+      "description": "Jullie zijn vuurwapengevaarlijk. Laat zien dat jullie handlanger niet erg handig is met een vuurwapen.",
+      "spoor": ""
+    },
+    {
+      "id": "mission4",
+      "order": 4,
+      "lat": 52.132714,
+      "lng": 5.368064,
+      "cryptic": "De vlucht van de criminelen heeft een ongeluk veroorzaakt. De hunters moeten een foto van de schade zien.",
+      "description": "Jullie vluchtgedrag is erg gevaarlijk! Maak een foto van het ongeluk dat jullie veroorzaakten.",
+      "spoor": ""
+    },
+    {
+      "id": "mission5",
+      "order": 5,
+      "lat": 52.13117,
+      "lng": 5.366998,
+      "cryptic": "De geheime documenten liggen op een bepaalde plek. De handlanger moet ze controleren.",
+      "description": "Hier liggen de geheime documenten. Deze documenten moeten jullie hebben! Maak een foto dat jullie handlanger de documenten checkt.",
+      "spoor": ""
+    },
+    {
+      "id": "mission6",
+      "order": 6,
+      "lat": 52.131334,
+      "lng": 5.366343,
+      "cryptic": "Is dit een geschikte plek om de documenten te verbergen? Laat de hunters een foto zien.",
+      "description": "Is dit een geschikte plek om de documenten te verbergen? Maak een foto.",
+      "spoor": ""
+    },
+    {
+      "id": "mission7",
+      "order": 7,
+      "lat": 52.1315,
+      "lng": 5.3668,
+      "cryptic": "De handlanger moet contact opnemen met een persoon. Een foto van de ontmoeting is vereist.",
+      "description": "De handlanger heeft een contactpersoon. Maak een foto van de ontmoeting.",
+      "spoor": ""
+    },
+    {
+      "id": "mission8",
+      "order": 8,
+      "lat": 52.13,
+      "lng": 5.367,
+      "cryptic": "De criminelen hebben een schuilplaats nodig voor de nacht. Laat de hunters de schuilplaats zien.",
+      "description": "Zoek een schuilplaats voor de nacht. Maak een foto van de schuilplaats.",
+      "spoor": ""
+    },
+    {
+      "id": "mission9",
+      "order": 9,
+      "lat": 52.132,
+      "lng": 5.365,
+      "cryptic": "De achtervolging is ingezet. De criminelen moeten sporen uitwissen. Een foto van de afgelegde weg is vereist.",
+      "description": "De achtervolging is ingezet. Zorg dat jullie sporen uitwissen. Maak een foto van de weg die jullie hebben afgelegd.",
+      "spoor": ""
+    },
+    {
+      "id": "mission10",
+      "order": 10,
+      "lat": 52.1318,
+      "lng": 5.3685,
+      "cryptic": "De documenten bevatten geheime codes. De handlanger moet een code onthouden. Laat de hunters de code zien.",
+      "description": "De documenten bevatten geheime codes. Laat de handlanger een code onthouden. Maak een foto van de code.",
+      "spoor": ""
+    },
+    {
+      "id": "mission11",
+      "order": 11,
+      "lat": 52.1305,
+      "lng": 5.3655,
+      "cryptic": "Er is een checkpoint. De handlanger moet de wacht omkopen. Een foto van de omkoping is vereist.",
+      "description": "Er is een checkpoint. Laat de handlanger de wacht omkopen. Maak een foto van de omkoping.",
+      "spoor": ""
+    },
+    {
+      "id": "mission12",
+      "order": 12,
+      "lat": 52.131,
+      "lng": 5.3675,
+      "cryptic": "De documenten moeten worden overhandigd aan de opdrachtgever. Een foto van de overhandiging is vereist.",
+      "description": "Jullie moeten de documenten overhandigen aan de opdrachtgever. Maak een foto van de overhandiging.",
+      "spoor": ""
+    },
+    {
+      "id": "mission13",
+      "order": 13,
+      "lat": 52.1325,
+      "lng": 5.3665,
+      "cryptic": "De opdrachtgever wil een teken van loyaliteit. Laat de handlanger met een wapen zien.",
+      "description": "De opdrachtgever wil een teken van jullie loyaliteit. Maak een foto van jullie team met een wapen.",
+      "spoor": ""
+    },
+    {
+      "id": "mission14",
+      "order": 14,
+      "lat": 52.1308,
+      "lng": 5.3682,
+      "cryptic": "De ontsnapping per helikopter is de laatste stap. Een foto van de helikopter is vereist.",
+      "description": "Einddoel: ontsnapping per helikopter. Maak een foto van de helikopter.",
+      "spoor": ""
+    }
   ];
 
   // ----- Opslagfuncties -----
