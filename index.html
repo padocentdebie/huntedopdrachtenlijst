@@ -119,7 +119,10 @@
 <body>
 <div class="container">
   <h1>📌 Missiecoördinaten - sleep de pinnen & bewerk teksten</h1>
-  <p style="color: #8899aa; margin-bottom: 16px;">Sleep de markers naar de gewenste locaties. Bewerk de OC‑melding, opdrachtteksten en het spoor/materiaal per locatie. <strong>Alle wijzigingen worden automatisch opgeslagen!</strong></p>
+  <p style="color: #8899aa; margin-bottom: 16px;">
+    Sleep de markers naar de gewenste locaties. Bewerk de OC‑melding, opdrachtteksten en het spoor per locatie.
+    <strong>Alle wijzigingen worden live opgeslagen in Firebase!</strong>
+  </p>
 
   <div id="map"></div>
 
@@ -134,16 +137,38 @@
   </div>
 </div>
 
-<script>
-  // ----- Initieel de 14 missies (exact jouw JSON) -----
+<script type="module">
+  // ============================================================
+  // IMPORTS & FIREBASE
+  // ============================================================
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyB12mTMBnuxdC4W4htyFO_C7Dnh3maVKew",
+    authDomain: "decoroefening.firebaseapp.com",
+    databaseURL: "https://decoroefening-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "decoroefening",
+    storageBucket: "decoroefening.firebasestorage.app",
+    messagingSenderId: "945998495824",
+    appId: "1:945998495824:web:a76dc7519b3b262a021155"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const MISSIONS_PATH = 'master/missions'; // centrale plek in Firebase
+
+  // ============================================================
+  // INITIËLE MISSIES (fallback)
+  // ============================================================
   const initialMissions = [
     {
       "id": "mission1",
       "order": 1,
       "lat": 52.131168,
       "lng": 5.365757,
-      "cryptic": "Er is een handlanger die op de criminelen wacht. Zorg dat hij de aarde niet raakt. Bewijs van hun ontmoeting is vereist.",
-      "description": "Pik hier jullie handlanger op. De handlanger mag onder geen enkele voorwaarde, tijdens jullie actie, de grond raken. Maak een foto van jullie team, met handlanger voor de schuilplaats van de handlanger.",
+      "cryptic": "OC-melding: Handlanger opgepikt, bewijs van ontmoeting vereist.",
+      "description": "Godfather: Pik de handlanger op. Hij mag de grond niet raken. Maak een foto voor de schuilplaats.",
       "spoor": ""
     },
     {
@@ -151,8 +176,8 @@
       "order": 2,
       "lat": 52.131605,
       "lng": 5.368394,
-      "cryptic": "De criminelen hebben een vluchtvoertuig nodig. Kies er één uit en maak een foto met de handlanger en het voertuig.",
-      "description": "Zoek hier een geschikt vluchtvoertuig uit. Maak een foto met jullie handlanger en het voertuig.",
+      "cryptic": "OC-melding: Vluchtvoertuig geselecteerd, foto met voertuig vereist.",
+      "description": "Godfather: Kies een vluchtauto en maak een foto met de handlanger en het voertuig.",
       "spoor": ""
     },
     {
@@ -160,8 +185,8 @@
       "order": 3,
       "lat": 52.130893,
       "lng": 5.364418,
-      "cryptic": "De handlanger moet laten zien dat hij met een vuurwapen kan omgaan. Een foto van de handlanger met een vuurwapen is vereist.",
-      "description": "Jullie zijn vuurwapengevaarlijk. Laat zien dat jullie handlanger niet erg handig is met een vuurwapen.",
+      "cryptic": "OC-melding: Handlanger toont vuurwapen, onhandig gedrag gesignaleerd.",
+      "description": "Godfather: Laat de handlanger met een wapen zien – hij is er niet handig mee.",
       "spoor": ""
     },
     {
@@ -169,8 +194,8 @@
       "order": 4,
       "lat": 52.132714,
       "lng": 5.368064,
-      "cryptic": "De vlucht van de criminelen heeft een ongeluk veroorzaakt. De hunters moeten een foto van de schade zien.",
-      "description": "Jullie vluchtgedrag is erg gevaarlijk! Maak een foto van het ongeluk dat jullie veroorzaakten.",
+      "cryptic": "OC-melding: Ongeluk veroorzaakt door vlucht, foto van schade vereist.",
+      "description": "Godfather: Maak een foto van het ongeluk dat jullie hebben veroorzaakt.",
       "spoor": ""
     },
     {
@@ -178,8 +203,8 @@
       "order": 5,
       "lat": 52.13117,
       "lng": 5.366998,
-      "cryptic": "De geheime documenten liggen op een bepaalde plek. De handlanger moet ze controleren.",
-      "description": "Hier liggen de geheime documenten. Deze documenten moeten jullie hebben! Maak een foto dat jullie handlanger de documenten checkt.",
+      "cryptic": "OC-melding: Geheime documenten worden gecontroleerd.",
+      "description": "Godfather: Controleer de documenten en maak een foto van de handlanger die ze checkt.",
       "spoor": ""
     },
     {
@@ -187,8 +212,8 @@
       "order": 6,
       "lat": 52.131334,
       "lng": 5.366343,
-      "cryptic": "Is dit een geschikte plek om de documenten te verbergen? Laat de hunters een foto zien.",
-      "description": "Is dit een geschikte plek om de documenten te verbergen? Maak een foto.",
+      "cryptic": "OC-melding: Verbergplek voor documenten wordt geïnspecteerd.",
+      "description": "Godfather: Is dit een goede schuilplek? Maak een foto.",
       "spoor": ""
     },
     {
@@ -196,17 +221,17 @@
       "order": 7,
       "lat": 52.1315,
       "lng": 5.3668,
-      "cryptic": "De handlanger moet contact opnemen met een persoon. Een foto van de ontmoeting is vereist.",
-      "description": "De handlanger heeft een contactpersoon. Maak een foto van de ontmoeting.",
-      "spoor": ""
+      "cryptic": "OC-melding: Contactpersoon ontmoet, foto van ontmoeting vereist.",
+      "description": "Godfather: Neem contact op met de persoon en maak een foto van de ontmoeting.",
+      "spoor": "Persoon plaatsnemen in oefenwoning"
     },
     {
       "id": "mission8",
       "order": 8,
       "lat": 52.13,
       "lng": 5.367,
-      "cryptic": "De criminelen hebben een schuilplaats nodig voor de nacht. Laat de hunters de schuilplaats zien.",
-      "description": "Zoek een schuilplaats voor de nacht. Maak een foto van de schuilplaats.",
+      "cryptic": "OC-melding: Schuilplaats voor de nacht wordt gezocht.",
+      "description": "Godfather: Zoek een schuilplaats voor de nacht en maak een foto.",
       "spoor": ""
     },
     {
@@ -214,8 +239,8 @@
       "order": 9,
       "lat": 52.132,
       "lng": 5.365,
-      "cryptic": "De achtervolging is ingezet. De criminelen moeten sporen uitwissen. Een foto van de afgelegde weg is vereist.",
-      "description": "De achtervolging is ingezet. Zorg dat jullie sporen uitwissen. Maak een foto van de weg die jullie hebben afgelegd.",
+      "cryptic": "OC-melding: Sporen worden uitgewist, foto van de weg vereist.",
+      "description": "Godfather: Wis jullie sporen en maak een foto van de afgelegde weg.",
       "spoor": ""
     },
     {
@@ -223,8 +248,8 @@
       "order": 10,
       "lat": 52.1318,
       "lng": 5.3685,
-      "cryptic": "De documenten bevatten geheime codes. De handlanger moet een code onthouden. Laat de hunters de code zien.",
-      "description": "De documenten bevatten geheime codes. Laat de handlanger een code onthouden. Maak een foto van de code.",
+      "cryptic": "OC-melding: Geheime code wordt onthouden, foto van code vereist.",
+      "description": "Godfather: Laat de handlanger een code onthouden en maak een foto van de code.",
       "spoor": ""
     },
     {
@@ -232,8 +257,8 @@
       "order": 11,
       "lat": 52.1305,
       "lng": 5.3655,
-      "cryptic": "Er is een checkpoint. De handlanger moet de wacht omkopen. Een foto van de omkoping is vereist.",
-      "description": "Er is een checkpoint. Laat de handlanger de wacht omkopen. Maak een foto van de omkoping.",
+      "cryptic": "OC-melding: Checkpoint, omkoping van de wacht vastgelegd.",
+      "description": "Godfather: Koop de wacht om en maak een foto van de omkoping.",
       "spoor": ""
     },
     {
@@ -241,8 +266,8 @@
       "order": 12,
       "lat": 52.131,
       "lng": 5.3675,
-      "cryptic": "De documenten moeten worden overhandigd aan de opdrachtgever. Een foto van de overhandiging is vereist.",
-      "description": "Jullie moeten de documenten overhandigen aan de opdrachtgever. Maak een foto van de overhandiging.",
+      "cryptic": "OC-melding: Documenten worden overhandigd aan opdrachtgever.",
+      "description": "Godfather: Overhandig de documenten en maak een foto van de overhandiging.",
       "spoor": ""
     },
     {
@@ -250,8 +275,8 @@
       "order": 13,
       "lat": 52.1325,
       "lng": 5.3665,
-      "cryptic": "De opdrachtgever wil een teken van loyaliteit. Laat de handlanger met een wapen zien.",
-      "description": "De opdrachtgever wil een teken van jullie loyaliteit. Maak een foto van jullie team met een wapen.",
+      "cryptic": "OC-melding: Loyaliteit getoond met wapen, foto vereist.",
+      "description": "Godfather: Toon loyaliteit met een wapen en maak een foto.",
       "spoor": ""
     },
     {
@@ -259,69 +284,101 @@
       "order": 14,
       "lat": 52.1308,
       "lng": 5.3682,
-      "cryptic": "De ontsnapping per helikopter is de laatste stap. Een foto van de helikopter is vereist.",
-      "description": "Einddoel: ontsnapping per helikopter. Maak een foto van de helikopter.",
+      "cryptic": "OC-melding: Ontsnapping per helikopter, foto van helikopter vereist.",
+      "description": "Godfather: Ontsnap per helikopter en maak een foto van de helikopter.",
       "spoor": ""
     }
   ];
 
-  // ----- Opslag in localStorage -----
-  function loadMissions() {
-    try {
-      const stored = localStorage.getItem('missions');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length === initialMissions.length) {
-          return parsed;
-        }
+  // ============================================================
+  // GLOBALE STATE
+  // ============================================================
+  let missions = [];
+  let markers = [];
+  let map;
+
+  // ============================================================
+  // FIREBASE: LADEN & OPSLAAN
+  // ============================================================
+  function loadFromFirebase() {
+    const missionsRef = ref(db, MISSIONS_PATH);
+    onValue(missionsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data && Array.isArray(data) && data.length === initialMissions.length) {
+        missions = data;
+      } else if (data && Array.isArray(data)) {
+        // fallback: als lengte niet klopt, overschrijven met initial
+        missions = initialMissions.map(m => ({ ...m }));
+        set(missionsRef, missions);
+      } else {
+        // geen data
+        missions = initialMissions.map(m => ({ ...m }));
+        set(missionsRef, missions);
       }
-    } catch (e) { /* fallback */ }
-    return initialMissions.map(m => ({ ...m }));
-  }
-
-  function saveMissions() {
-    localStorage.setItem('missions', JSON.stringify(missions));
-  }
-
-  let missions = loadMissions();
-
-  // ----- Kaart -----
-  const map = L.map('map').setView([52.131, 5.367], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-
-  const markers = [];
-
-  function createMarker(m, index) {
-    const marker = L.marker([m.lat, m.lng], { draggable: true, autoPan: true }).addTo(map);
-
-    function updatePopup() {
-      const content = `
-        <strong>Missie ${m.order}</strong><br>
-        <strong>OC‑melding:</strong> ${m.cryptic}<br>
-        <strong>Opdracht:</strong> ${m.description}<br>
-        <strong>Spoor:</strong> ${m.spoor || '—'}<br>
-        <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
-      `;
-      marker.bindPopup(content);
-    }
-    updatePopup();
-
-    marker.on('dragend', function() {
-      const pos = marker.getLatLng();
-      m.lat = pos.lat;
-      m.lng = pos.lng;
-      updatePopup();
-      updateCoordList();
-      saveMissions();
-      document.getElementById('status').textContent = '📍 Coördinaten bijgewerkt en opgeslagen.';
+      // update kaart en lijst
+      updateMapAndList();
+      document.getElementById('status').textContent = '📂 Missies geladen uit Firebase.';
     });
-
-    return marker;
   }
 
-  // ----- Lijst met bewerkbare velden -----
+  function saveToFirebase() {
+    const missionsRef = ref(db, MISSIONS_PATH);
+    set(missionsRef, missions);
+  }
+
+  // ============================================================
+  // KAART & MARKERS
+  // ============================================================
+  function initMap() {
+    map = L.map('map').setView([52.131, 5.367], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+  }
+
+  function getPopupContent(m) {
+    return `
+      <strong>Missie ${m.order}</strong><br>
+      <strong>OC‑melding:</strong> ${m.cryptic}<br>
+      <strong>Opdracht:</strong> ${m.description}<br>
+      <strong>Spoor:</strong> ${m.spoor || '—'}<br>
+      <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
+    `;
+  }
+
+  function updateMapAndList() {
+    // verwijder oude markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
+    // maak nieuwe markers
+    for (let i = 0; i < missions.length; i++) {
+      const m = missions[i];
+      const marker = L.marker([m.lat, m.lng], { draggable: true, autoPan: true }).addTo(map);
+      marker.bindPopup(getPopupContent(m));
+      marker.on('dragend', function() {
+        const pos = marker.getLatLng();
+        m.lat = pos.lat;
+        m.lng = pos.lng;
+        saveToFirebase();
+        updateCoordList();
+        document.getElementById('status').textContent = '📍 Coördinaten bijgewerkt en opgeslagen.';
+      });
+      markers.push(marker);
+    }
+    updateCoordList();
+  }
+
+  function updateMarkerPopup(index) {
+    const m = missions[index];
+    const marker = markers[index];
+    if (marker) {
+      marker.bindPopup(getPopupContent(m));
+    }
+  }
+
+  // ============================================================
+  // LIJST MET BEWERKBARE VELDEN
+  // ============================================================
   function updateCoordList() {
     const container = document.getElementById('coordContainer');
     let html = '';
@@ -353,86 +410,68 @@
       crypticTA.addEventListener('input', function() {
         m.cryptic = this.value;
         updateMarkerPopup(index);
-        saveMissions();
+        saveToFirebase();
         document.getElementById('status').textContent = '🔐 OC‑melding bijgewerkt.';
       });
       descTA.addEventListener('input', function() {
         m.description = this.value;
         updateMarkerPopup(index);
-        saveMissions();
+        saveToFirebase();
         document.getElementById('status').textContent = '📋 Opdracht bijgewerkt.';
       });
       spoorTA.addEventListener('input', function() {
         m.spoor = this.value;
         updateMarkerPopup(index);
-        saveMissions();
+        saveToFirebase();
         document.getElementById('status').textContent = '🧩 Spoor bijgewerkt.';
       });
     });
   }
 
-  function updateMarkerPopup(index) {
-    const m = missions[index];
-    const marker = markers[index];
-    if (marker) {
-      const content = `
-        <strong>Missie ${m.order}</strong><br>
-        <strong>OC‑melding:</strong> ${m.cryptic}<br>
-        <strong>Opdracht:</strong> ${m.description}<br>
-        <strong>Spoor:</strong> ${m.spoor || '—'}<br>
-        <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
-      `;
-      marker.bindPopup(content);
-    }
-  }
-
-  // ----- Hulp: actuele JSON ophalen -----
+  // ============================================================
+  // HULP: JSON EXPORT
+  // ============================================================
   function getCurrentJSON() {
     return JSON.stringify(missions, null, 2);
   }
 
-  // ----- Kopieerknop -----
-  document.getElementById('copyBtn').addEventListener('click', async () => {
-    const json = getCurrentJSON();
-    try {
-      await navigator.clipboard.writeText(json);
-      document.getElementById('status').textContent = '✅ JSON gekopieerd naar klembord!';
-    } catch {
-      // fallback
-      const ta = document.createElement('textarea');
-      ta.value = json;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-      document.getElementById('status').textContent = '✅ JSON gekopieerd!';
-    }
+  // ============================================================
+  // START
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+    loadFromFirebase();
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      const json = getCurrentJSON();
+      try {
+        await navigator.clipboard.writeText(json);
+        document.getElementById('status').textContent = '✅ JSON gekopieerd naar klembord!';
+      } catch {
+        const ta = document.createElement('textarea');
+        ta.value = json;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        document.getElementById('status').textContent = '✅ JSON gekopieerd!';
+      }
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+      const json = getCurrentJSON();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'missies.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      document.getElementById('status').textContent = '💾 JSON-bestand gedownload!';
+    });
   });
-
-  // ----- Downloadknop -----
-  document.getElementById('downloadBtn').addEventListener('click', function() {
-    const json = getCurrentJSON();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'missies.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    document.getElementById('status').textContent = '💾 JSON-bestand gedownload!';
-  });
-
-  // ----- Start -----
-  for (let i = 0; i < missions.length; i++) {
-    markers.push(createMarker(missions[i], i));
-  }
-  updateCoordList();
-
-  if (localStorage.getItem('missions')) {
-    document.getElementById('status').textContent = '📂 Opgeslagen missies geladen.';
-  }
 </script>
 </body>
 </html>
