@@ -303,7 +303,7 @@
   let missions = [];
   let markers = [];
   let map;
-  let coordElements = [];
+  let coordElements = []; // nog steeds nodig voor tekstvelden, maar niet voor coördinaten
   let isUpdatingFromFirebase = false;
 
   // ===== FIREBASE =====
@@ -326,7 +326,6 @@
         missions = DEFAULT_MISSIONS.map(m => ({ ...m }));
         set(missionsRef, missions);
       }
-      // Update UI zonder DOM te vervangen
       updateUIFromData();
       document.getElementById('status').textContent = '📂 Missies geladen uit Firebase.';
     });
@@ -339,28 +338,27 @@
 
   // ===== UI BIJWERKEN ZONDER DOM TE VERVANGEN =====
   function updateUIFromData() {
-    // Als de lijst nog niet bestaat, bouw hem dan
     const container = document.getElementById('coordContainer');
     if (container.children.length === 0) {
       buildAllCoordItems();
       updateAllMarkers();
       return;
     }
-    // Anders: update alleen de waarden van bestaande elementen
     for (let i = 0; i < missions.length; i++) {
       const m = missions[i];
       const el = coordElements[i];
       if (el) {
-        el.coordsSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
-        // Alleen bijwerken als de waarde anders is (voorkomt cursorverlies)
+        // Coördinaten bijwerken via ID
+        const coordSpan = document.getElementById(`coord-${i}`);
+        if (coordSpan) coordSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
+        // Tekstvelden alleen bijwerken als de waarde veranderd is (voorkomt cursorverlies)
         if (el.crypticTA.value !== m.cryptic) el.crypticTA.value = m.cryptic;
         if (el.descTA.value !== m.description) el.descTA.value = m.description;
         if (el.spoorTA.value !== (m.spoor || '')) el.spoorTA.value = m.spoor || '';
-        // Popup van marker bijwerken
         if (markers[i]) markers[i].bindPopup(getPopupContent(m));
       }
     }
-    // Als er meer items in missions dan in coordElements, voeg ze toe
+    // Nieuwe items toevoegen als die er zijn
     for (let i = coordElements.length; i < missions.length; i++) {
       appendCoordItem(i);
       addMarker(i);
@@ -413,6 +411,15 @@
     const m = missions[index];
     const marker = markers[index];
     if (marker) marker.bindPopup(getPopupContent(m));
+  }
+
+  // ===== GECORRIGEERDE updateCoordDisplay =====
+  function updateCoordDisplay(index) {
+    const m = missions[index];
+    const coordSpan = document.getElementById(`coord-${index}`);
+    if (coordSpan) {
+      coordSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
+    }
   }
 
   // ===== DOM: LIJST (eenmalig bouwen) =====
@@ -476,14 +483,6 @@
     });
   }
 
-  function updateCoordDisplay(index) {
-    const m = missions[index];
-    const el = coordElements[index];
-    if (el && el.coordsSpan) {
-      el.coordsSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
-    }
-  }
-
   // ===== NIEUWE MISSIE TOEVOEGEN =====
   function addNewMission() {
     let maxOrder = 0;
@@ -521,7 +520,6 @@
       isUpdatingFromFirebase = true;
       missions = DEFAULT_MISSIONS.map(m => ({ ...m }));
       saveToFirebase();
-      // UI updaten zonder DOM te vervangen
       updateUIFromData();
       isUpdatingFromFirebase = false;
       document.getElementById('status').textContent = '🔄 Gereset naar de 14 standaardmissies.';
