@@ -149,7 +149,7 @@
   // IMPORTS & FIREBASE
   // ============================================================
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-  import { getDatabase, ref, set, onValue, push, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyB12mTMBnuxdC4W4htyFO_C7Dnh3maVKew",
@@ -165,7 +165,7 @@
   const db = getDatabase(app);
   const MISSIONS_PATH = 'master/missions';
 
-  // ===== INITIËLE MISSIES (fallback) =====
+  // ===== ACTUELE MISSIES (zoals in de game) =====
   const initialMissions = [
     {
       "id": "mission1",
@@ -343,7 +343,6 @@
     `;
   }
 
-  // ===== MARKERS (volledige rebuild) =====
   function updateAllMarkers() {
     markers.forEach(m => map.removeLayer(m));
     markers = [];
@@ -406,14 +405,12 @@
 
     container.appendChild(div);
 
-    // Referenties opslaan
     const coordsSpan = document.getElementById(`coord-${index}`);
     const crypticTA = document.getElementById(`cryptic-${index}`);
     const descTA = document.getElementById(`desc-${index}`);
     const spoorTA = document.getElementById(`spoor-${index}`);
     coordElements[index] = { coordsSpan, crypticTA, descTA, spoorTA };
 
-    // Events koppelen
     crypticTA.addEventListener('input', function() {
       missions[index].cryptic = this.value;
       updateMarkerPopup(index);
@@ -444,7 +441,6 @@
 
   // ===== NIEUWE MISSIE TOEVOEGEN =====
   function addNewMission() {
-    // Bepaal hoogste order en id
     let maxOrder = 0;
     let maxIdNum = 0;
     missions.forEach(m => {
@@ -455,7 +451,6 @@
     const newOrder = maxOrder + 1;
     const newId = `mission${maxIdNum + 1}`;
 
-    // Standaardlocatie: midden van de kaart of een default
     const center = map.getCenter();
     const newMission = {
       id: newId,
@@ -469,12 +464,8 @@
 
     missions.push(newMission);
     const newIndex = missions.length - 1;
-
-    // DOM toevoegen
     appendCoordItem(newIndex);
-    // Marker toevoegen
     addMarker(newIndex);
-    // Opslaan
     saveToFirebase();
     document.getElementById('status').textContent = `✅ Nieuwe missie ${newId} toegevoegd.`;
   }
