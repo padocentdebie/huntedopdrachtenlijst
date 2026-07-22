@@ -112,6 +112,12 @@
     .btn-success:hover {
       background: #218838;
     }
+    .btn-danger {
+      background: #dc3545;
+    }
+    .btn-danger:hover {
+      background: #c82333;
+    }
     .status {
       margin-top: 8px;
       font-size: 0.9rem;
@@ -137,6 +143,7 @@
     <div id="coordContainer"></div>
     <div class="btn-group">
       <button class="btn btn-success" id="addBtn">➕ Nieuwe missie toevoegen</button>
+      <button class="btn btn-danger" id="resetBtn">🔄 Reset naar standaard</button>
       <button class="btn" id="copyBtn">📋 Kopieer JSON</button>
       <button class="btn btn-secondary" id="downloadBtn">💾 Download JSON</button>
     </div>
@@ -165,8 +172,8 @@
   const db = getDatabase(app);
   const MISSIONS_PATH = 'master/missions';
 
-  // ===== ACTUELE MISSIES (zoals in de game) =====
-  const initialMissions = [
+  // ===== DE 14 STANDAARD MISSIES (volledig) =====
+  const DEFAULT_MISSIONS = [
     {
       "id": "mission1",
       "order": 1,
@@ -306,13 +313,21 @@
     const missionsRef = ref(db, MISSIONS_PATH);
     onValue(missionsRef, (snapshot) => {
       const data = snapshot.val();
-      if (data && Array.isArray(data) && data.length >= 1) {
-        missions = data;
-      } else if (data && Array.isArray(data)) {
-        missions = initialMissions.map(m => ({ ...m }));
-        set(missionsRef, missions);
+      if (data && Array.isArray(data) && data.length > 0) {
+        // We hebben data – maar als er missies ontbreken, voegen we ze toe
+        const existingIds = new Set(data.map(m => m.id));
+        const missing = DEFAULT_MISSIONS.filter(m => !existingIds.has(m.id));
+        if (missing.length > 0) {
+          missions = [...data, ...missing];
+          // Sorteer op order
+          missions.sort((a,b) => a.order - b.order);
+          set(missionsRef, missions);
+        } else {
+          missions = data;
+        }
       } else {
-        missions = initialMissions.map(m => ({ ...m }));
+        // Geen data – gebruik de standaard
+        missions = DEFAULT_MISSIONS.map(m => ({ ...m }));
         set(missionsRef, missions);
       }
       buildAllCoordItems();
@@ -323,6 +338,17 @@
 
   function saveToFirebase() {
     set(ref(db, MISSIONS_PATH), missions);
+  }
+
+  // ===== RESET =====
+  function resetToDefault() {
+    if (confirm('Weet je zeker dat je alle missies wilt resetten naar de standaard 14? Alle huidige wijzigingen gaan verloren!')) {
+      missions = DEFAULT_MISSIONS.map(m => ({ ...m }));
+      saveToFirebase();
+      buildAllCoordItems();
+      updateAllMarkers();
+      document.getElementById('status').textContent = '🔄 Gereset naar de 14 standaardmissies.';
+    }
   }
 
   // ===== KAART =====
@@ -481,6 +507,7 @@
     loadFromFirebase();
 
     document.getElementById('addBtn').addEventListener('click', addNewMission);
+    document.getElementById('resetBtn').addEventListener('click', resetToDefault);
 
     document.getElementById('copyBtn').addEventListener('click', async () => {
       const json = getCurrentJSON();
