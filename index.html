@@ -152,9 +152,6 @@
 </div>
 
 <script type="module">
-  // ============================================================
-  // IMPORTS & FIREBASE
-  // ============================================================
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
   import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
@@ -172,7 +169,7 @@
   const db = getDatabase(app);
   const MISSIONS_PATH = 'master/missions';
 
-  // ===== DE 14 STANDAARD MISSIES (volledig) =====
+  // ===== DE 14 STANDAARD MISSIES =====
   const DEFAULT_MISSIONS = [
     {
       "id": "mission1",
@@ -307,47 +304,66 @@
   let markers = [];
   let map;
   let coordElements = [];
+  let isUpdatingFromFirebase = false;
 
   // ===== FIREBASE =====
   function loadFromFirebase() {
     const missionsRef = ref(db, MISSIONS_PATH);
     onValue(missionsRef, (snapshot) => {
+      if (isUpdatingFromFirebase) return;
       const data = snapshot.val();
       if (data && Array.isArray(data) && data.length > 0) {
-        // We hebben data – maar als er missies ontbreken, voegen we ze toe
         const existingIds = new Set(data.map(m => m.id));
         const missing = DEFAULT_MISSIONS.filter(m => !existingIds.has(m.id));
         if (missing.length > 0) {
           missions = [...data, ...missing];
-          // Sorteer op order
           missions.sort((a,b) => a.order - b.order);
           set(missionsRef, missions);
         } else {
           missions = data;
         }
       } else {
-        // Geen data – gebruik de standaard
         missions = DEFAULT_MISSIONS.map(m => ({ ...m }));
         set(missionsRef, missions);
       }
-      buildAllCoordItems();
-      updateAllMarkers();
+      // Update UI zonder DOM te vervangen
+      updateUIFromData();
       document.getElementById('status').textContent = '📂 Missies geladen uit Firebase.';
     });
   }
 
   function saveToFirebase() {
+    if (isUpdatingFromFirebase) return;
     set(ref(db, MISSIONS_PATH), missions);
   }
 
-  // ===== RESET =====
-  function resetToDefault() {
-    if (confirm('Weet je zeker dat je alle missies wilt resetten naar de standaard 14? Alle huidige wijzigingen gaan verloren!')) {
-      missions = DEFAULT_MISSIONS.map(m => ({ ...m }));
-      saveToFirebase();
+  // ===== UI BIJWERKEN ZONDER DOM TE VERVANGEN =====
+  function updateUIFromData() {
+    // Als de lijst nog niet bestaat, bouw hem dan
+    const container = document.getElementById('coordContainer');
+    if (container.children.length === 0) {
       buildAllCoordItems();
       updateAllMarkers();
-      document.getElementById('status').textContent = '🔄 Gereset naar de 14 standaardmissies.';
+      return;
+    }
+    // Anders: update alleen de waarden van bestaande elementen
+    for (let i = 0; i < missions.length; i++) {
+      const m = missions[i];
+      const el = coordElements[i];
+      if (el) {
+        el.coordsSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
+        // Alleen bijwerken als de waarde anders is (voorkomt cursorverlies)
+        if (el.crypticTA.value !== m.cryptic) el.crypticTA.value = m.cryptic;
+        if (el.descTA.value !== m.description) el.descTA.value = m.description;
+        if (el.spoorTA.value !== (m.spoor || '')) el.spoorTA.value = m.spoor || '';
+        // Popup van marker bijwerken
+        if (markers[i]) markers[i].bindPopup(getPopupContent(m));
+      }
+    }
+    // Als er meer items in missions dan in coordElements, voeg ze toe
+    for (let i = coordElements.length; i < missions.length; i++) {
+      appendCoordItem(i);
+      addMarker(i);
     }
   }
 
@@ -399,7 +415,7 @@
     if (marker) marker.bindPopup(getPopupContent(m));
   }
 
-  // ===== DOM: LIJST =====
+  // ===== DOM: LIJST (eenmalig bouwen) =====
   function buildAllCoordItems() {
     const container = document.getElementById('coordContainer');
     container.innerHTML = '';
@@ -438,18 +454,21 @@
     coordElements[index] = { coordsSpan, crypticTA, descTA, spoorTA };
 
     crypticTA.addEventListener('input', function() {
+      if (isUpdatingFromFirebase) return;
       missions[index].cryptic = this.value;
       updateMarkerPopup(index);
       saveToFirebase();
       document.getElementById('status').textContent = '🔐 OC‑melding bijgewerkt.';
     });
     descTA.addEventListener('input', function() {
+      if (isUpdatingFromFirebase) return;
       missions[index].description = this.value;
       updateMarkerPopup(index);
       saveToFirebase();
       document.getElementById('status').textContent = '📋 Opdracht bijgewerkt.';
     });
     spoorTA.addEventListener('input', function() {
+      if (isUpdatingFromFirebase) return;
       missions[index].spoor = this.value;
       updateMarkerPopup(index);
       saveToFirebase();
@@ -494,6 +513,19 @@
     addMarker(newIndex);
     saveToFirebase();
     document.getElementById('status').textContent = `✅ Nieuwe missie ${newId} toegevoegd.`;
+  }
+
+  // ===== RESET =====
+  function resetToDefault() {
+    if (confirm('Weet je zeker dat je alle missies wilt resetten naar de standaard 14? Alle huidige wijzigingen gaan verloren!')) {
+      isUpdatingFromFirebase = true;
+      missions = DEFAULT_MISSIONS.map(m => ({ ...m }));
+      saveToFirebase();
+      // UI updaten zonder DOM te vervangen
+      updateUIFromData();
+      isUpdatingFromFirebase = false;
+      document.getElementById('status').textContent = '🔄 Gereset naar de 14 standaardmissies.';
+    }
   }
 
   // ===== EXPORT =====
