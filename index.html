@@ -58,6 +58,11 @@
     .coord-coords {
       color: #e0e0e0;
       font-family: monospace;
+      transition: color 0.3s;
+    }
+    .coord-coords.updated {
+      color: #4caf50;
+      font-weight: bold;
     }
     .coord-textarea {
       width: 100%;
@@ -123,6 +128,12 @@
       font-size: 0.9rem;
       color: #8899aa;
     }
+    .status.saving {
+      color: #ffc107;
+    }
+    .status.saved {
+      color: #28a745;
+    }
     .leaflet-control-attribution {
       color: #667788 !important;
     }
@@ -133,7 +144,7 @@
   <h1>📌 Missiecoördinaten - sleep de pinnen & bewerk teksten</h1>
   <p style="color: #8899aa; margin-bottom: 16px;">
     Sleep de markers naar de gewenste locaties. Bewerk de OC‑melding, opdrachtteksten en het spoor per locatie.
-    <strong>Alle wijzigingen worden live opgeslagen in Firebase!</strong>
+    <strong>Alle wijzigingen worden automatisch opgeslagen!</strong>
   </p>
 
   <div id="map"></div>
@@ -147,7 +158,7 @@
       <button class="btn" id="copyBtn">📋 Kopieer JSON</button>
       <button class="btn btn-secondary" id="downloadBtn">💾 Download JSON</button>
     </div>
-    <div id="status" class="status"></div>
+    <div id="status" class="status">Gereed</div>
   </div>
 </div>
 
@@ -303,8 +314,36 @@
   let missions = [];
   let markers = [];
   let map;
-  let coordElements = []; // nog steeds nodig voor tekstvelden, maar niet voor coördinaten
+  let coordElements = [];
   let isUpdatingFromFirebase = false;
+  let saveTimeout = null;
+  let pendingSave = false;
+
+  // ===== AUTOMATISCH OPSLAAN MET 2 SECONDEN DEBOUNCE =====
+  function autoSave() {
+    if (saveTimeout) clearTimeout(saveTimeout);
+    
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = '⏳ Wijzigingen worden opgeslagen...';
+    statusEl.className = 'status saving';
+    
+    saveTimeout = setTimeout(() => {
+      saveToFirebase();
+      pendingSave = false;
+      statusEl.textContent = '✅ Opgeslagen!';
+      statusEl.className = 'status saved';
+      
+      // Reset status na 2 seconden
+      setTimeout(() => {
+        if (!pendingSave) {
+          statusEl.textContent = 'Gereed';
+          statusEl.className = 'status';
+        }
+      }, 2000);
+    }, 2000);
+    
+    pendingSave = true;
+  }
 
   // ===== FIREBASE =====
   function loadFromFirebase() {
@@ -328,6 +367,7 @@
       }
       updateUIFromData();
       document.getElementById('status').textContent = '📂 Missies geladen uit Firebase.';
+      document.getElementById('status').className = 'status';
     });
   }
 
@@ -336,32 +376,44 @@
     set(ref(db, MISSIONS_PATH), missions);
   }
 
-  // ===== UI BIJWERKEN ZONDER DOM TE VERVANGEN =====
+  // ===== UI BIJWERKEN =====
   function updateUIFromData() {
     const container = document.getElementById('coordContainer');
-    if (container.children.length === 0) {
+    if (container.children.length === 0 || container.children.length !== missions.length) {
       buildAllCoordItems();
       updateAllMarkers();
       return;
     }
+    
     for (let i = 0; i < missions.length; i++) {
       const m = missions[i];
       const el = coordElements[i];
       if (el) {
-        // Coördinaten bijwerken via ID
+        // Coördinaten bijwerken
         const coordSpan = document.getElementById(`coord-${i}`);
-        if (coordSpan) coordSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
-        // Tekstvelden alleen bijwerken als de waarde veranderd is (voorkomt cursorverlies)
-        if (el.crypticTA.value !== m.cryptic) el.crypticTA.value = m.cryptic;
-        if (el.descTA.value !== m.description) el.descTA.value = m.description;
-        if (el.spoorTA.value !== (m.spoor || '')) el.spoorTA.value = m.spoor || '';
-        if (markers[i]) markers[i].bindPopup(getPopupContent(m));
+        if (coordSpan && coordSpan.textContent !== `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`) {
+          coordSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
+          // Visuele feedback
+          coordSpan.classList.add('updated');
+          setTimeout(() => coordSpan.classList.remove('updated'), 1000);
+        }
+        
+        // Tekstvelden alleen bijwerken als ze niet in focus zijn (voorkomt cursorverlies)
+        if (document.activeElement !== el.crypticTA && el.crypticTA.value !== m.cryptic) {
+          el.crypticTA.value = m.cryptic;
+        }
+        if (document.activeElement !== el.descTA && el.descTA.value !== m.description) {
+          el.descTA.value = m.description;
+        }
+        if (document.activeElement !== el.spoorTA && el.spoorTA.value !== (m.spoor || '')) {
+          el.spoorTA.value = m.spoor || '';
+        }
+        
+        // Update marker popup
+        if (markers[i]) {
+          markers[i].setPopupContent(getPopupContent(m));
+        }
       }
-    }
-    // Nieuwe items toevoegen als die er zijn
-    for (let i = coordElements.length; i < missions.length; i++) {
-      appendCoordItem(i);
-      addMarker(i);
     }
   }
 
@@ -376,10 +428,10 @@
   function getPopupContent(m) {
     return `
       <strong>Missie ${m.order}</strong><br>
-      <strong>OC‑melding:</strong> ${m.cryptic}<br>
-      <strong>Opdracht:</strong> ${m.description}<br>
+      <strong>OC‑melding:</strong> ${m.cryptic || '—'}<br>
+      <strong>Opdracht:</strong> ${m.description || '—'}<br>
       <strong>Spoor:</strong> ${m.spoor || '—'}<br>
-      <span style="font-family:monospace;">${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
+      <span style="font-family:monospace;">📍 ${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}</span>
     `;
   }
 
@@ -393,36 +445,62 @@
 
   function addMarker(index) {
     const m = missions[index];
-    const marker = L.marker([m.lat, m.lng], { draggable: true, autoPan: true }).addTo(map);
+    const marker = L.marker([m.lat, m.lng], { 
+      draggable: true, 
+      autoPan: true,
+      title: `Missie ${m.order}`
+    }).addTo(map);
+    
     marker.bindPopup(getPopupContent(m));
+    
+    marker.on('drag', function() {
+      // Live update tijdens het slepen
+      const pos = marker.getLatLng();
+      missions[index].lat = pos.lat;
+      missions[index].lng = pos.lng;
+      updateCoordDisplay(index, false); // Update zonder marker popup te refreshen
+    });
+    
     marker.on('dragend', function() {
       const pos = marker.getLatLng();
-      m.lat = pos.lat;
-      m.lng = pos.lng;
-      saveToFirebase();
-      updateCoordDisplay(index);
-      document.getElementById('status').textContent = '📍 Coördinaten bijgewerkt en opgeslagen.';
+      missions[index].lat = pos.lat;
+      missions[index].lng = pos.lng;
+      updateCoordDisplay(index, true); // Update met marker popup
+      autoSave(); // Automatisch opslaan
     });
+    
     markers[index] = marker;
     return marker;
+  }
+
+  function updateCoordDisplay(index, updateMarker = true) {
+    const m = missions[index];
+    const coordSpan = document.getElementById(`coord-${index}`);
+    if (coordSpan) {
+      coordSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
+      coordSpan.classList.add('updated');
+      setTimeout(() => coordSpan.classList.remove('updated'), 1000);
+    }
+    
+    if (updateMarker && markers[index]) {
+      markers[index].setLatLng([m.lat, m.lng]);
+      markers[index].setPopupContent(getPopupContent(m));
+    }
   }
 
   function updateMarkerPopup(index) {
     const m = missions[index];
     const marker = markers[index];
-    if (marker) marker.bindPopup(getPopupContent(m));
-  }
-
-  // ===== GECORRIGEERDE updateCoordDisplay =====
-  function updateCoordDisplay(index) {
-    const m = missions[index];
-    const coordSpan = document.getElementById(`coord-${index}`);
-    if (coordSpan) {
-      coordSpan.textContent = `${m.lat.toFixed(6)}, ${m.lng.toFixed(6)}`;
+    if (marker) {
+      marker.setPopupContent(getPopupContent(m));
+      // Als de popup open is, ververs deze
+      if (marker.isPopupOpen()) {
+        marker.openPopup();
+      }
     }
   }
 
-  // ===== DOM: LIJST (eenmalig bouwen) =====
+  // ===== DOM: LIJST =====
   function buildAllCoordItems() {
     const container = document.getElementById('coordContainer');
     container.innerHTML = '';
@@ -454,32 +532,31 @@
 
     container.appendChild(div);
 
-    const coordsSpan = document.getElementById(`coord-${index}`);
     const crypticTA = document.getElementById(`cryptic-${index}`);
     const descTA = document.getElementById(`desc-${index}`);
     const spoorTA = document.getElementById(`spoor-${index}`);
-    coordElements[index] = { coordsSpan, crypticTA, descTA, spoorTA };
+    coordElements[index] = { crypticTA, descTA, spoorTA };
 
+    // Event listeners met auto-save
     crypticTA.addEventListener('input', function() {
       if (isUpdatingFromFirebase) return;
       missions[index].cryptic = this.value;
       updateMarkerPopup(index);
-      saveToFirebase();
-      document.getElementById('status').textContent = '🔐 OC‑melding bijgewerkt.';
+      autoSave();
     });
+    
     descTA.addEventListener('input', function() {
       if (isUpdatingFromFirebase) return;
       missions[index].description = this.value;
       updateMarkerPopup(index);
-      saveToFirebase();
-      document.getElementById('status').textContent = '📋 Opdracht bijgewerkt.';
+      autoSave();
     });
+    
     spoorTA.addEventListener('input', function() {
       if (isUpdatingFromFirebase) return;
       missions[index].spoor = this.value;
       updateMarkerPopup(index);
-      saveToFirebase();
-      document.getElementById('status').textContent = '🧩 Spoor bijgewerkt.';
+      autoSave();
     });
   }
 
@@ -510,8 +587,13 @@
     const newIndex = missions.length - 1;
     appendCoordItem(newIndex);
     addMarker(newIndex);
-    saveToFirebase();
-    document.getElementById('status').textContent = `✅ Nieuwe missie ${newId} toegevoegd.`;
+    autoSave(); // Automatisch opslaan
+    
+    // Scroll naar de nieuwe missie
+    const coordItems = document.querySelectorAll('.coord-item');
+    if (coordItems[newIndex]) {
+      coordItems[newIndex].scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   // ===== RESET =====
@@ -520,9 +602,14 @@
       isUpdatingFromFirebase = true;
       missions = DEFAULT_MISSIONS.map(m => ({ ...m }));
       saveToFirebase();
-      updateUIFromData();
-      isUpdatingFromFirebase = false;
-      document.getElementById('status').textContent = '🔄 Gereset naar de 14 standaardmissies.';
+      
+      // Wacht even met UI update
+      setTimeout(() => {
+        updateUIFromData();
+        isUpdatingFromFirebase = false;
+        document.getElementById('status').textContent = '🔄 Gereset naar de 14 standaardmissies.';
+        document.getElementById('status').className = 'status';
+      }, 500);
     }
   }
 
@@ -544,6 +631,11 @@
       try {
         await navigator.clipboard.writeText(json);
         document.getElementById('status').textContent = '✅ JSON gekopieerd naar klembord!';
+        document.getElementById('status').className = 'status saved';
+        setTimeout(() => {
+          document.getElementById('status').textContent = 'Gereed';
+          document.getElementById('status').className = 'status';
+        }, 3000);
       } catch {
         const ta = document.createElement('textarea');
         ta.value = json;
